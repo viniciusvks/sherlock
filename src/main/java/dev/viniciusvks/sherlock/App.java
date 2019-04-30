@@ -6,9 +6,9 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Properties;
 
-import dev.viniciusvks.sherlock.search.SearchClient;
 import dev.viniciusvks.sherlock.search.SearchResponse;
 import dev.viniciusvks.sherlock.search.SearchResult;
+import dev.viniciusvks.sherlock.search.cse.CseSearchClient;
 
 public class App {
 	
@@ -32,7 +32,7 @@ public class App {
 		String API_KEY = properties.getProperty("key");
 		String API_CX = properties.getProperty("cx");
 		
-		SearchResponse searchResponse = new SearchClient()
+		SearchResponse searchResponse = new CseSearchClient()
 				.setKey(API_KEY)
 				.setCx(API_CX)
 				.search(query);

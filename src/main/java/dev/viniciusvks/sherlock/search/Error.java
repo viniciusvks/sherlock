@@ -15,5 +15,14 @@ public class Error {
 	public String getMessage() {
 		return message;
 	}
+	public void setDomain(String domain) {
+		this.domain = domain;
+	}
+	public void setReason(String reason) {
+		this.reason = reason;
+	}
+	public void setMessage(String message) {
+		this.message = message;
+	}
 
 }

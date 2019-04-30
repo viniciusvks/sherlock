@@ -15,5 +15,14 @@ public class SearchError {
 	public String getMessage() {
 		return message;
 	}
+	public void setErrors(Error[] errors) {
+		this.errors = errors;
+	}
+	public void setCode(Integer code) {
+		this.code = code;
+	}
+	public void setMessage(String message) {
+		this.message = message;
+	}
 	
 }

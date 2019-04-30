@@ -1,4 +1,4 @@
-package dev.viniciusvks.sherlock.search;
+package dev.viniciusvks.sherlock.search.cse;
 
 import static org.junit.Assert.*;
 
@@ -9,8 +9,12 @@ import java.util.Properties;
 
 import org.junit.Test;
 
-public class SearchTest {
-	
+import dev.viniciusvks.sherlock.search.Error;
+import dev.viniciusvks.sherlock.search.SearchError;
+import dev.viniciusvks.sherlock.search.cse.CseSearch;
+
+public class CseSearchTest {
+
 	private static final String PROPERTIES_FILE_RELATIVE_PATH = "/src/main/resources/app.properties";
 	private static final String QUERY = "O aprendizado automático ou a aprendizagem automática ou também aprendizado de máquina ou "
 									  + "aprendizagem de máquina é um subcampo da ciência da computação que evoluiu do estudo de "
@@ -29,7 +33,7 @@ public class SearchTest {
 		
 		String cx = properties.getProperty("cx");
 		
-		Search search = new Search(QUERY);
+		CseSearch search = new CseSearch(QUERY);
 		search.setCx(cx).execute();
 		
 		SearchError searchError = search.getErrors();
@@ -60,7 +64,7 @@ public class SearchTest {
 		
 		String cx = properties.getProperty("key");
 		
-		Search search = new Search(QUERY);
+		CseSearch search = new CseSearch(QUERY);
 		search.setCx(cx).execute();
 		
 		SearchError searchError = search.getErrors();
@@ -91,7 +95,7 @@ public class SearchTest {
 		
 		String cx = properties.getProperty("cx");
 		
-		Search search = new Search(QUERY)
+		CseSearch search = new CseSearch(QUERY)
 								.setKey("INVALID KEY")
 								.setCx(cx);
 		search.execute();
@@ -124,7 +128,7 @@ public class SearchTest {
 		
 		String key = properties.getProperty("key");
 		
-		Search search = new Search(QUERY)
+		CseSearch search = new CseSearch(QUERY)
 								.setKey(key)
 								.setCx("INVALID CX");
 		search.execute();
