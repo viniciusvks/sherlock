@@ -14,9 +14,9 @@ public class Document implements Closeable {
 	PDDocument document;
 	PDFTextStripper textStripper;
 	
-	public Document(String path) throws DocumentException, IOException {
+	public Document(File file) throws DocumentException, IOException {
 		try{
-			document = PDDocument.load(new File(path));
+			document = PDDocument.load(file);
 			numberOfPages = document.getNumberOfPages();
 			textStripper = new PDFTextStripper();
 		} catch (InvalidPasswordException e) {
