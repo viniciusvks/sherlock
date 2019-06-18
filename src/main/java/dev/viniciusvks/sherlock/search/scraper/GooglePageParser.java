@@ -48,20 +48,21 @@ public class GooglePageParser {
 		DomNode rootNode = null;
 		
 		try {
+
 			rootNode = extractNode(document, PageNode.ROOT);
-		}catch(PageParseException e) {
+			if(rootNode.hasChildNodes()) {
+				extractResultNodes(rootNode);
+			}
+			extractNextPageLink(document);
+
+		} catch(PageParseException e) {
 			log.error("Error parsing page: {}", e.getMessage());
 			if(hasRecaptcha(document)) {
 				throw new PageParseException("Recaptcha page detected");
 			}
+
+			throw e;
 		}
-		
-		if(rootNode.hasChildNodes()) {
-			extractResultNodes(rootNode);
-		}
-		
-		extractNextPageLink(document);
-	
 	}
 	
 	public boolean hasRecaptcha(DomNode root) {

@@ -3,6 +3,9 @@ package dev.viniciusvks.sherlock.search.cse;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.customsearch.Customsearch;
@@ -16,6 +19,8 @@ import dev.viniciusvks.sherlock.search.SearchResult;
 
 public class CseSearch implements Search {
 	
+	private static final Logger log = LogManager.getLogger(CseSearch.class);
+
 	private Customsearch customSearch;
 	private Long pageIndex = 1L;
 	 
@@ -24,22 +29,29 @@ public class CseSearch implements Search {
 	private List list;
 	private Query nextPage;
 	
-	public CseSearch(String query) {
+	public CseSearch(String query, Customsearch customSearch) {
 		
-		customSearch = new Customsearch(new NetHttpTransport(), new JacksonFactory(), null);
+		log.info("New search query: {}", query);
+
+		this.customSearch = customSearch;
 		results = new ArrayList<SearchResult>();
 		
 		try {
 			
-			list = customSearch
-			.cse()
-			.list(query);
+			list = this.customSearch.cse().list(query);
 						
 		} catch (IOException e) {
-			System.out.println("Error instantiating search object:" + e.getMessage());
+			log.error("Error instantiating search object: {}", e.getMessage());
+			clearData();
+			extractSearchErrors(e);
+			nextPage = null;
 		}
 	}
 	
+	public CseSearch(String query) {
+		this(query, new Customsearch(new NetHttpTransport(), new JacksonFactory(), null));
+	}
+
 	public CseSearch setKey(String key) {
 		list.setKey(key);
 		return this;
@@ -52,6 +64,11 @@ public class CseSearch implements Search {
 	
 	public void execute() {
 		
+		if(hasErrors()) {
+			log.warn("Search has errors. aborting execution");
+			return;
+		}
+
 		try {
 			com.google.api.services.customsearch.model.Search cseSearch = list.setStart(pageIndex).execute();
 			clearData();
@@ -73,15 +90,24 @@ public class CseSearch implements Search {
 	}
 	
 	private void extractSearchErrors(IOException e) {
+
 		String jsonObject = extractJsonObject(e.getMessage());
-		SearchError searchError = new Gson().fromJson(jsonObject, SearchError.class);
-		errors = searchError;
+
+		if(jsonObject.isEmpty()) {
+
+			SearchError searchError = new SearchError();
+			searchError.setMessage(e.getMessage());
+			errors = searchError;
+
+		} else {
+			errors = new Gson().fromJson(jsonObject, SearchError.class);
+		}
 	}
 
 	private String extractJsonObject(String message) {
 		int start = message.indexOf("{");
 		int end = message.lastIndexOf("}") + 1;
-		return message.substring(start, end);
+		return (start >= 0 && end > 0) ? message.substring(start, end) : "";
 	}
 	
 	private void clearData() {

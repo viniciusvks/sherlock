@@ -1,5 +1,6 @@
 package dev.viniciusvks.sherlock.search.scraper;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
@@ -24,23 +25,30 @@ import dev.viniciusvks.sherlock.search.Search;
 import dev.viniciusvks.sherlock.search.SearchError;
 import dev.viniciusvks.sherlock.search.SearchResult;
 
-public class ScraperSearch implements Search {
+public class ScraperSearch implements Search, Closeable {
 	
 	private static final Logger log = LogManager.getLogger(ScraperSearch.class);
-	
 	private static final String BASE_URL = "https://www.google.com";
 	
 	private String pageUrl;
 	private GooglePageParser pageParser;
+	private WebClient webClient;
 	private ArrayList<SearchResult> results;
 	private SearchError errors;
 	
 	public ScraperSearch(String query) {
-		java.util.logging.Logger.getLogger("com.gargoylesoftware").setLevel(Level.OFF);
-		results = new ArrayList<>();
-		buildPageUrl(query);
-		pageParser = new GooglePageParser();
+		this(query, new WebClient(BrowserVersion.BEST_SUPPORTED), new GooglePageParser());
+	}
+
+	public ScraperSearch(String query, WebClient webClient, GooglePageParser pageParser) {
 		log.info("New search query: {}", query);
+		java.util.logging.Logger.getLogger("com.gargoylesoftware").setLevel(Level.OFF);
+		buildPageUrl(query);
+		this.pageParser = pageParser;
+		this.webClient = webClient;
+		this.webClient.setCssErrorHandler(new SilentCssErrorHandler());
+		this.webClient.setJavaScriptErrorListener(new SilentJavaScriptErrorListener());
+		results = new ArrayList<>();
 	}
 	
 	private void buildPageUrl(String query) {
@@ -70,11 +78,7 @@ public class ScraperSearch implements Search {
 			log.warn("Search with errors, cancelling request.");
 			return;
 		}
-		
-		WebClient webClient = new WebClient(BrowserVersion.BEST_SUPPORTED);
-		webClient.setCssErrorHandler(new SilentCssErrorHandler());
-		webClient.setJavaScriptErrorListener(new SilentJavaScriptErrorListener());
-		
+
 		try {
 			clearData();
 			log.info("Fetching page with url: {}", pageUrl);
@@ -84,6 +88,8 @@ public class ScraperSearch implements Search {
 			results = pageParser.getResults();
 		} catch (FailingHttpStatusCodeException e) {
 			handleFailedRequest(e.getResponse(), webClient.getCurrentWindow());
+			clearData();
+			extractSearchErrors(e);
 		} catch (IOException e) {
 			log.error("Error fetching page: {}", e.getMessage());
 			clearData();
@@ -92,8 +98,6 @@ public class ScraperSearch implements Search {
 			log.error("Error parsing page: {}", e.getMessage());
 			clearData();
 			extractSearchErrors(e);
-		} finally {
-			webClient.close();
 		}
 
 	}
@@ -148,6 +152,11 @@ public class ScraperSearch implements Search {
 	@Override
 	public ArrayList<SearchResult> getResults() {
 		return results;
+	}
+
+	@Override
+	public void close() {
+		webClient.close();
 	}
 
 }

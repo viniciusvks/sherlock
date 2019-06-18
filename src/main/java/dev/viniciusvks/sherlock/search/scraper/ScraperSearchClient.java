@@ -21,20 +21,23 @@ public class ScraperSearchClient implements SearchClient {
 		
 		ArrayList<SearchResult> searchResults = new ArrayList<>();
 		SearchResponse searchResponse = new SearchResponse();
-		ScraperSearch search = new ScraperSearch(query);
 		
-		for(search.execute();  !search.hasErrors() && search.hasNextPage(); search.nextPage()) {
+		try(ScraperSearch search = new ScraperSearch(query)) {
+
+			for(search.execute();  !search.hasErrors() && search.hasNextPage(); search.nextPage()) {
+				searchResults.addAll(search.getResults());
+			}
+
+			log.info("Search finished.");
+
+			if(search.hasErrors()) {
+				searchResponse.setErrors(search.getErrors());
+			}
+
 			searchResults.addAll(search.getResults());
+			searchResponse.setResults(searchResults);
 		}
 		
-		log.info("Search finished.");
-		
-		if(search.hasErrors()) {
-			searchResponse.setErrors(search.getErrors());
-		}
-		
-		searchResults.addAll(search.getResults());
-		searchResponse.setResults(searchResults);
 		return searchResponse;
 	}
 
