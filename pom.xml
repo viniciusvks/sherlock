@@ -10,19 +10,19 @@
 
   <name>sherlock</name>
   <!-- FIXME change it to the project's website -->
-  <url>http://www.example.com</url>
+  <url>https://github.com/viniciusvks/sherlock</url>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.source>1.7</maven.compiler.source>
-    <maven.compiler.target>1.7</maven.compiler.target>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
   </properties>
 
   <dependencies>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.11</version>
+      <version>4.12</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -60,6 +60,13 @@
 	    <artifactId>pdfbox</artifactId>
 	    <version>2.0.15</version>
 	</dependency>
+	<dependency>
+	    <groupId>org.mockito</groupId>
+	    <artifactId>mockito-all</artifactId>
+	    <version>1.10.19</version>
+	    <scope>test</scope>
+	</dependency>
+	
   </dependencies>
 
   <build>
@@ -69,7 +76,48 @@
           <artifactId>maven-clean-plugin</artifactId>
           <version>3.0.0</version>
         </plugin>
-        <!-- see http://maven.apache.org/ref/current/maven-core/default-bindings.html#Plugin_bindings_for_jar_packaging -->
+        <plugin>
+	      <groupId>org.sonarsource.scanner.maven</groupId>
+	      <artifactId>sonar-maven-plugin</artifactId>
+	      <version>3.5.0.1254</version>
+	      <executions>
+	        <execution>
+	          <phase>verify</phase>
+	          <goals>
+	            <goal>sonar</goal>
+	          </goals>
+	        </execution>
+	      </executions>
+	    </plugin>
+	    <plugin>
+	      <groupId>org.jacoco</groupId>
+	      <artifactId>jacoco-maven-plugin</artifactId>
+	      <version>0.8.2</version>
+	      <configuration>
+	        <append>true</append>
+	      </configuration>
+	      <executions>
+	        <execution>
+	          <id>prepare-agent</id>
+	          <goals>
+	            <goal>prepare-agent</goal>
+	          </goals>
+	        </execution>
+	        <execution>
+	          <id>prepare-agent-integration</id>
+	          <goals>
+	            <goal>prepare-agent-integration</goal>
+	          </goals>
+	        </execution>
+	        <execution>
+	          <id>jacoco-site</id>
+	          <phase>verify</phase>
+	          <goals>
+	            <goal>report</goal>
+	          </goals>
+	        </execution>
+	      </executions>
+	    </plugin>        
         <plugin>
           <artifactId>maven-resources-plugin</artifactId>
           <version>3.0.2</version>
@@ -97,4 +145,25 @@
       </plugins>
     </pluginManagement>
   </build>
+  <profiles>
+  <profile>
+	  <id>sonar</id>
+	  <properties>
+	    <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+	    <sonar.organization>viniciusvks-github</sonar.organization>
+	  </properties>
+	  <build>
+	    <plugins>
+	      <plugin>
+	        <groupId>org.jacoco</groupId>
+	        <artifactId>jacoco-maven-plugin</artifactId>
+	      </plugin>
+	      <plugin>
+	        <groupId>org.sonarsource.scanner.maven</groupId>
+	        <artifactId>sonar-maven-plugin</artifactId>
+	      </plugin>
+	    </plugins>
+	  </build>
+	</profile>
+	</profiles>
 </project>

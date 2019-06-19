@@ -1,17 +1,15 @@
 package dev.viniciusvks.sherlock.search.scraper;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 
-import org.apache.http.client.utils.URIBuilder;
 import org.junit.Test;
 
-import com.gargoylesoftware.htmlunit.BrowserVersion;
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
@@ -20,57 +18,64 @@ import dev.viniciusvks.sherlock.search.SearchResult;
 
 public class GooglePageParserTest {
 	
-	private static final String SCHEME = "https";
-	private static final String HOST = "www.google.com";
-	private static final String PATH = "/search";
+	private static final String SAMPLE_PAGE = "file://home/vinicius/Dev/sherlock/src/test/resources/sample-google-page.html";
+	private static final String INVALID_PAGE = "file://home/vinicius/Dev/sherlock/src/test/resources/invalid-google-page.html";
+	private static final String CAPTCHA_PAGE = "file://home/vinicius/Dev/sherlock/src/test/resources/captcha.html";
 	
 	@Test
 	public void parserShouldReturnValidResultsWhenHtmlPageIsValid() {
+
+		try(WebClient webClient = new WebClient()) {
 		
-		String query = "ano 2001 eu estava prestes abandonar carreira gerente projetos " + 
-				"software. Eu não aguentava mais aquilo. Era escopo sempre mudava. prazo " + 
-				"custo sempre estouravam cliente nunca sabia queria correria " + 
-				"fim projeto. Fins semana ";
-				
-		try(WebClient webClient = new WebClient(BrowserVersion.CHROME)) {
-			
-			String pageUrl = resolveUrl(query);
-			HtmlPage page = webClient.getPage(pageUrl);
+			HtmlPage page = webClient.getPage(SAMPLE_PAGE);
 			GooglePageParser parser = new GooglePageParser();
+
 			parser.parse(page);
 			ArrayList<SearchResult> results = parser.getResults();
 			assertFalse(results.isEmpty());
-			logSearchResults(results);
 			
-		} catch (URISyntaxException  | FailingHttpStatusCodeException | PageParseException | IOException e) {
+		} catch (FailingHttpStatusCodeException | PageParseException | IOException e) {
 			fail(e.getMessage());
 		}
 		
 	}
 	
-	public String resolveUrl(String query) throws MalformedURLException, URISyntaxException {
-		return new URIBuilder()
-				.setScheme(SCHEME)
-				.setHost(HOST)
-				.setPath(PATH)
-				.setParameter("safe", "off")
-				.setParameter("source", "hp")
-				.setParameter("btnK", "Google Search")
-				.setParameter("q", query)
-				.setParameter("start", "1")
-				.build()
-				.toURL()
-				.toString();
+	@Test(expected=PageParseException.class)
+	public void parserShouldThrowExceptionWhenPageIsInvalid() throws PageParseException {
+
+		try(WebClient webClient = new WebClient()) {
+
+			HtmlPage page = webClient.getPage(INVALID_PAGE);
+			GooglePageParser parser = new GooglePageParser();
+
+			parser.parse(page);
+			ArrayList<SearchResult> results = parser.getResults();
+			assertTrue(results.isEmpty());
+
+		} catch (FailingHttpStatusCodeException | IOException e) {
+			fail(e.getMessage());
+		}
+
 	}
 	
-	private void logSearchResults(ArrayList<SearchResult> results) {
-		System.out.println("Results");			
-		System.out.println("+----------------------------------------------------------------------------------------------------------");
-		for(SearchResult result : results) {
-			System.out.println("|link: "+ result.getLink());
-			System.out.println("|snippet: "+ result.getSnippet());
-			System.out.println("+----------------------------------------------------------------------------------------------------------");
+	@Test
+	public void parserShouldDetectPageWithCaptcha() {
+
+		try(WebClient webClient = new WebClient()) {
+
+			HtmlPage page = webClient.getPage(CAPTCHA_PAGE);
+			GooglePageParser parser = new GooglePageParser();
+
+			parser.parse(page);
+			ArrayList<SearchResult> results = parser.getResults();
+			assertTrue(results.isEmpty());
+
+		}catch(PageParseException e) {
+			assertEquals("Recaptcha page detected", e.getMessage());
+		}catch (FailingHttpStatusCodeException | IOException e) {
+			fail(e.getMessage());
 		}
+
 	}
 
 }
